@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kristal Nexus | Cross-Domain Research Collision Engine</title>
+<meta name="description" content="An experimental research intelligence tool that discovers where two research fields collide. Enter two domains — Nexus finds gaps, overlaps, bridge papers, and cross-domain hypotheses across the intersection.">
+<meta name="keywords" content="interdisciplinary research, cross-domain, research gaps, collision, bridge papers, transdisciplinary, innovation, serendipity, research intelligence">
+<meta name="author" content="Mullair Jeudi, MD — Kristal Labs">
+
+<meta property="og:title" content="Kristal Nexus — Cross-Domain Research Collision Engine">
+<meta property="og:description" content="Enter two research fields. Nexus finds where they collide — shared gaps, bridge papers, and cross-domain hypotheses that nobody is pursuing. Free, open-source.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kristal Nexus — Where Research Fields Collide">
+<meta name="twitter:description" content="First tool to systematically map collisions between two research domains. Free for all researchers.">
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org","@type":"SoftwareApplication",
+  "name":"Kristal Nexus","version":"1.0",
+  "applicationCategory":"Research Tool","operatingSystem":"Web Browser",
+  "description":"Cross-domain research collision engine. Scans OpenAlex, arXiv & PubMed across two fields simultaneously to find overlaps, bridge papers, and cross-domain hypotheses.",
+  "author":{"@type":"Person","name":"Mullair Jeudi, MD","affiliation":"Kristal Labs"},
+  "license":"https://opensource.org/licenses/MIT",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --void:#050509;--ink:#0a0b12;--ink-2:#0f1119;--ink-3:#151822;--ink-4:#1c1f2e;--ink-5:#242840;
+  /* Domain A = warm ember */
+  --a:#e07a3a;--a-bright:#f5924e;--a-dim:rgba(224,122,58,0.10);--a-glow:rgba(224,122,58,0.05);
+  /* Domain B = cool electric */
+  --b:#3a8ee0;--b-bright:#4ea5f5;--b-dim:rgba(58,142,224,0.10);--b-glow:rgba(58,142,224,0.05);
+  /* Collision zone = violet spark */
+  --nx:#b44aea;--nx-bright:#cc6aff;--nx-dim:rgba(180,74,234,0.10);--nx-glow:rgba(180,74,234,0.06);
+  /* Accents */
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.10);
+  --rose:#f87171;--rose-dim:rgba(248,113,113,0.10);
+  --gold:#d4a853;--gold-dim:rgba(212,168,83,0.10);
+  --text:#dde0eb;--text-mid:#8a90a8;--text-dim:#5a6078;--text-faint:#373b50;
+  --border:rgba(255,255,255,0.06);--border-hi:rgba(255,255,255,0.10);
+  --ff-head:'Cormorant Garamond',Georgia,serif;
+  --ff-body:'Outfit',system-ui,sans-serif;
+  --ff-mono:'DM Mono','Courier New',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--ff-body);background:var(--void);color:var(--text);min-height:100vh;line-height:1.6;}
+
+/* ── COLLISION ATMOSPHERE ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 45% 45% at 20% 40%, rgba(224,122,58,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 45% 45% at 80% 40%, rgba(58,142,224,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 30% at 50% 40%, rgba(180,74,234,0.06) 0%, transparent 60%),
+    radial-gradient(1px 1px at 12% 28%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 47% 12%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(1px 1px at 78% 52%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 33% 78%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 88% 18%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(1.5px 1.5px at 50% 38%, rgba(180,74,234,0.6), transparent);
+  pointer-events:none;z-index:0;
+}
+
+.app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:0 20px 80px;}
+
+/* ── HEADER ── */
+.hdr{text-align:center;padding:40px 0 30px;}
+.hdr-kicker{font-family:var(--ff-mono);font-size:10px;letter-spacing:6px;text-transform:uppercase;color:var(--nx);margin-bottom:8px;}
+.hdr-title{font-family:var(--ff-head);font-size:clamp(38px,6vw,62px);font-weight:700;line-height:1.1;letter-spacing:1px;}
+.hdr-title .w-a{color:var(--a-bright);}
+.hdr-title .w-nx{background:linear-gradient(135deg,var(--a),var(--nx),var(--b));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hdr-title .w-b{color:var(--b-bright);}
+.hdr-sub{font-size:15px;color:var(--text-mid);margin-top:10px;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.7;}
+.hdr-sub a{color:var(--nx);text-decoration:none;}
+.hdr-badges{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.hdr-badge{font-family:var(--ff-mono);font-size:9px;padding:3px 10px;border-radius:4px;border:1px solid var(--border);color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;}
+.hdr-badge.free{border-color:rgba(45,212,191,0.3);color:var(--teal);}
+.hdr-badge.new{border-color:var(--nx-dim);color:var(--nx);background:var(--nx-glow);}
+
+/* ── DUAL INPUT ── */
+.dual-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:end;margin-bottom:20px;}
+.domain-box{background:var(--ink);border:1.5px solid var(--border);border-radius:12px;padding:20px;transition:border-color 0.3s;}
+.domain-box:focus-within.box-a{border-color:var(--a);}
+.domain-box:focus-within.box-b{border-color:var(--b);}
+.domain-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.domain-label .dot{width:8px;height:8px;border-radius:50%;}
+.dot-a{background:var(--a);box-shadow:0 0 8px var(--a-glow);}
+.dot-b{background:var(--b);box-shadow:0 0 8px var(--b-glow);}
+.domain-input{width:100%;background:transparent;border:none;color:var(--text);font-size:16px;font-family:var(--ff-body);outline:none;padding:4px 0;}
+.domain-input::placeholder{color:var(--text-dim);font-style:italic;}
+.domain-hint{font-size:11px;color:var(--text-faint);margin-top:8px;font-style:italic;}
+
+.collision-symbol{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 16px;position:relative;}
+.collision-icon{width:56px;height:56px;border-radius:50%;background:var(--nx-dim);border:2px solid var(--nx);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--nx-bright);box-shadow:0 0 30px var(--nx-glow);animation:pulseSlow 3s ease-in-out infinite;}
+@keyframes pulseSlow{0%,100%{box-shadow:0 0 20px var(--nx-glow);}50%{box-shadow:0 0 40px rgba(180,74,234,0.15);}}
+.collision-line-l,.collision-line-r{width:40px;height:2px;position:absolute;top:50%;}
+.collision-line-l{right:100%;background:linear-gradient(to right,transparent,var(--a));}
+.collision-line-r{left:100%;background:linear-gradient(to left,transparent,var(--b));}
+
+/* ── CONTROLS ── */
+.ctrl-bar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.ctrl-sel{background:var(--ink-2);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px;outline:none;font-family:var(--ff-body);}
+.btn{padding:10px 22px;border-radius:8px;font-family:var(--ff-mono);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.2s;letter-spacing:0.5px;}
+.btn-nx{background:linear-gradient(135deg,var(--a),var(--nx),var(--b));color:#fff;text-transform:uppercase;font-weight:600;}
+.btn-nx:hover{filter:brightness(1.15);transform:translateY(-1px);}
+.btn-nx:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-mid);padding:8px 14px;font-size:11px;}
+.btn-ghost:hover{border-color:var(--nx);color:var(--nx);}
+.btn-a{background:linear-gradient(135deg,var(--a),#c86a2e);color:#fff;text-transform:uppercase;}
+.btn-b{background:linear-gradient(135deg,var(--b),#2e78c8);color:#fff;text-transform:uppercase;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ── API PANEL ── */
+.api-toggle{font-family:var(--ff-mono);font-size:10px;color:var(--text-dim);cursor:pointer;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:14px;}
+.api-toggle:hover{color:var(--nx);}
+.api-panel{display:none;background:var(--ink);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;}
+.api-panel.open{display:block;}
+.api-item{margin-bottom:10px;}
+.api-item label{font-family:var(--ff-mono);font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px;}
+.api-item input{width:100%;max-width:400px;background:var(--ink-3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:12px;font-family:var(--ff-mono);outline:none;}
+.api-dots{display:flex;gap:4px;margin-top:6px;}
+.api-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-4);transition:background 0.3s;}
+.api-dot.on{background:var(--teal);}
+.api-note{font-size:11px;color:var(--text-dim);line-height:1.6;margin-top:10px;padding:10px;background:var(--ink-2);border-radius:6px;border-left:3px solid var(--nx);}
+
+/* ── FREE BAR ── */
+.free-bar{background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;font-size:12px;}
+.free-bar strong{color:var(--text);}
+
+/* ── PROGRESS ── */
+.progress-wrap{display:none;margin-bottom:22px;background:var(--ink);border:1px solid var(--border);border-radius:10px;padding:18px;}
+.progress-wrap.show{display:block;}
+.prog-bar-bg{width:100%;height:6px;background:var(--ink-4);border-radius:3px;margin-bottom:10px;overflow:hidden;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--a),var(--nx),var(--b));border-radius:3px;width:0;transition:width 0.4s;}
+.prog-label{font-family:var(--ff-mono);font-size:11px;color:var(--text-mid);text-align:center;margin-bottom:10px;}
+.step-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.step-pill{font-family:var(--ff-mono);font-size:9px;padding:4px 10px;border-radius:4px;background:var(--ink-3);color:var(--text-dim);transition:all 0.3s;}
+.step-pill.active{background:var(--nx-dim);color:var(--nx-bright);border:1px solid var(--nx);}
+.step-pill.done{background:rgba(45,212,191,0.08);color:var(--teal);}
+
+/* ── STATS ── */
+.stat-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:22px;}
+.stat-card{background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-val{font-family:var(--ff-head);font-size:26px;font-weight:700;color:var(--text);}
+.stat-lbl{font-family:var(--ff-mono);font-size:8px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.stat-card:nth-child(1)::before{background:var(--a);}
+.stat-card:nth-child(2)::before{background:var(--b);}
+.stat-card:nth-child(3)::before{background:var(--nx);}
+.stat-card:nth-child(4)::before{background:var(--teal);}
+.stat-card:nth-child(5)::before{background:var(--gold);}
+.stat-card:nth-child(6)::before{background:var(--rose);}
+.stat-card:nth-child(7)::before{background:var(--nx);}
+
+/* ── TABS ── */
+.tab-bar{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto;}
+.tab-btn{font-family:var(--ff-mono);font-size:10px;padding:10px 14px;background:transparent;border:none;color:var(--text-dim);cursor:pointer;letter-spacing:0.5px;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.on{color:var(--nx);border-bottom-color:var(--nx);}
+.tab-pane{display:none;}
+.tab-pane.on{display:block;}
+
+/* ── SECTION HEADERS ── */
+.sec-h{font-family:var(--ff-head);font-size:22px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.sec-h .tag-a{color:var(--a);}
+.sec-h .tag-b{color:var(--b);}
+.sec-h .tag-nx{color:var(--nx);}
+
+/* ── PAPER CARDS ── */
+.paper-item{padding:12px 0;border-bottom:1px solid var(--border);}
+.paper-title{font-size:13px;font-weight:500;line-height:1.4;margin-bottom:3px;}
+.paper-title a{color:var(--text);text-decoration:none;}
+.paper-title a:hover{color:var(--nx);}
+.paper-meta{font-size:10px;color:var(--text-dim);display:flex;gap:10px;flex-wrap:wrap;}
+.paper-source{font-family:var(--ff-mono);font-size:8px;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;}
+.src-a{background:var(--a-dim);color:var(--a);}
+.src-b{background:var(--b-dim);color:var(--b);}
+.src-bridge{background:var(--nx-dim);color:var(--nx);border:1px solid rgba(180,74,234,0.3);}
+.src-openalex{background:rgba(100,140,200,0.1);color:#7eaadb;}
+
+/* ── COLLISION CARDS ── */
+.coll-card{background:var(--ink);border:1.5px solid var(--nx);border-radius:12px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden;}
+.coll-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%, var(--nx-glow),transparent 70%);pointer-events:none;}
+.coll-rank{font-family:var(--ff-mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--nx);margin-bottom:6px;position:relative;}
+.coll-title{font-family:var(--ff-head);font-size:20px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:8px;position:relative;}
+.coll-desc{font-size:13px;color:var(--text-mid);line-height:1.6;position:relative;}
+.coll-domains{display:flex;gap:8px;margin-top:12px;position:relative;}
+.coll-dtag{font-family:var(--ff-mono);font-size:9px;padding:4px 10px;border-radius:4px;letter-spacing:0.5px;}
+.coll-dtag.da{background:var(--a-dim);color:var(--a);border:1px solid rgba(224,122,58,0.2);}
+.coll-dtag.db{background:var(--b-dim);color:var(--b);border:1px solid rgba(58,142,224,0.2);}
+
+/* ── NEXUS SCORE ── */
+.nx-score-bar{position:absolute;top:18px;right:20px;text-align:center;z-index:1;}
+.nx-score-val{font-family:var(--ff-head);font-size:38px;font-weight:700;color:var(--nx-bright);line-height:1;}
+.nx-score-lbl{font-family:var(--ff-mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+
+/* ── CONCEPT OVERLAP ── */
+.concept-cloud{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;}
+.concept-tag{font-family:var(--ff-mono);font-size:11px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text-mid);transition:all 0.2s;}
+.concept-tag.shared{background:var(--nx-dim);border-color:var(--nx);color:var(--nx-bright);}
+.concept-tag.a-only{background:var(--a-glow);border-color:rgba(224,122,58,0.2);color:var(--a);}
+.concept-tag.b-only{background:var(--b-glow);border-color:rgba(58,142,224,0.2);color:var(--b);}
+
+/* ── BRIDGE RESEARCHERS ── */
+.bridge-card{display:flex;align-items:center;gap:12px;padding:12px;background:var(--ink-2);border-radius:8px;margin-bottom:6px;border-left:3px solid var(--nx);}
+.bridge-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--a-dim),var(--b-dim));display:flex;align-items:center;justify-content:center;font-family:var(--ff-mono);font-size:11px;color:var(--nx);flex-shrink:0;border:1px solid var(--border);}
+.bridge-name{font-size:13px;font-weight:500;color:var(--text);}
+.bridge-detail{font-size:10px;color:var(--text-dim);}
+.bridge-count{margin-left:auto;font-family:var(--ff-mono);font-size:10px;color:var(--text-dim);}
+
+/* ── HYPOTHESIS CARDS ── */
+.hypo-card{background:var(--ink);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px;}
+.hypo-card.top-path{border-color:var(--nx);box-shadow:0 0 20px var(--nx-glow);}
+.hypo-rank{font-family:var(--ff-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+.hypo-title{font-family:var(--ff-head);font-size:17px;font-weight:600;color:var(--text);font-style:italic;line-height:1.4;}
+.hypo-body{font-size:12px;color:var(--text-mid);line-height:1.6;}
+.hypo-meta{display:flex;gap:8px;margin-top:10px;}
+.hypo-tag{font-family:var(--ff-mono);font-size:9px;padding:3px 9px;border-radius:4px;}
+.tag-conf{background:var(--b-dim);color:var(--b);}
+.tag-spec-low{background:var(--teal-dim);color:var(--teal);}
+.tag-spec-medium{background:var(--gold-dim);color:var(--gold);}
+.tag-spec-high{background:var(--rose-dim);color:var(--rose);}
+
+/* ── GAP CARDS (per domain) ── */
+.gap-card{background:var(--ink);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:10px;}
+.gap-card.ga{border-left:3px solid var(--a);}
+.gap-card.gb{border-left:3px solid var(--b);}
+.gap-cat{font-family:var(--ff-head);font-size:17px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.gap-desc{font-size:12px;color:var(--text-mid);line-height:1.5;}
+.gap-q-row{display:flex;gap:12px;margin-top:8px;}
+.gap-q-mini{text-align:center;}
+.gap-q-val{font-family:var(--ff-head);font-size:18px;font-weight:700;}
+.gap-q-lbl{font-family:var(--ff-mono);font-size:7px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--ink-2);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:820px;width:100%;max-height:80vh;overflow-y:auto;position:relative;}
+.modal-x{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer;}
+.modal h3{font-family:var(--ff-head);font-size:22px;margin-bottom:14px;color:var(--nx);}
+
+/* ── CONSOLE ── */
+.console{background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:10px;max-height:180px;overflow-y:auto;margin-top:20px;}
+.con-line{font-family:var(--ff-mono);font-size:10px;line-height:1.8;display:flex;gap:8px;align-items:baseline;}
+.con-time{color:var(--text-faint);min-width:55px;}
+.con-tag{padding:1px 6px;border-radius:3px;font-size:8px;text-transform:uppercase;letter-spacing:0.5px;}
+.con-tag.sys{background:var(--ink-4);color:var(--text-dim);}
+.con-tag.ok{background:rgba(45,212,191,0.12);color:var(--teal);}
+.con-tag.info{background:var(--b-dim);color:var(--b);}
+.con-tag.warn{background:var(--gold-dim);color:var(--gold);}
+.con-tag.err{background:var(--rose-dim);color:var(--rose);}
+.con-tag.nx{background:var(--nx-dim);color:var(--nx);}
+.con-msg{color:var(--text-mid);}
+
+/* ── EMPTY ── */
+.empty{padding:30px;text-align:center;}
+.empty-text{font-family:var(--ff-head);font-style:italic;font-size:14px;color:var(--text-dim);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .dual-wrap{grid-template-columns:1fr;gap:0;}
+  .collision-symbol{padding:12px 0;flex-direction:row;}
+  .collision-line-l,.collision-line-r{display:none;}
+  .stat-bar{grid-template-columns:repeat(3,1fr);}
+}
+::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:var(--ink);} ::-webkit-scrollbar-thumb{background:var(--ink-5);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-kicker">Kristal Labs Presents</div>
+    <div class="hdr-title">
+      <span class="w-a">Where</span> <span class="w-nx">Research</span> <span class="w-b">Collides</span>
+    </div>
+    <div class="hdr-sub">
+      Enter two research fields. Nexus finds the collision points — shared gaps, bridge papers, and cross-domain hypotheses nobody is pursuing yet.<br>
+      Built by <a href="https://kristallabs.dev" target="_blank">Mullair Jeudi, MD — Kristal Labs</a>
+    </div>
+    <div class="hdr-badges">
+      <span class="hdr-badge new">✦ First of its kind</span>
+      <span class="hdr-badge free">100% free</span>
+      <span class="hdr-badge">OpenAlex</span>
+      <span class="hdr-badge">arXiv</span>
+      <span class="hdr-badge">PubMed</span>
+      <span class="hdr-badge">No keys required</span>
+    </div>
+  </div>
+
+  <!-- FREE BAR -->
+  <div class="free-bar">
+    <span style="font-size:20px">⚡</span>
+    <div style="color:var(--text-mid);line-height:1.5"><strong>Zero setup.</strong> OpenAlex, arXiv, and PubMed require no API keys. Add a Claude key for AI-powered collision hypotheses — but the core engine works for everyone, instantly.</div>
+  </div>
+
+  <!-- DUAL INPUT -->
+  <div class="dual-wrap">
+    <div class="domain-box box-a">
+      <div class="domain-label" style="color:var(--a)"><span class="dot dot-a"></span> Domain A</div>
+      <input class="domain-input" id="inputA" placeholder="e.g. space radiation biology" autocomplete="off">
+      <div class="domain-hint">Astrophysics, genomics, climate, neuroscience...</div>
+    </div>
+
+    <div class="collision-symbol">
+      <div class="collision-line-l"></div>
+      <div class="collision-icon">⚡</div>
+      <div class="collision-line-r"></div>
+    </div>
+
+    <div class="domain-box box-b">
+      <div class="domain-label" style="color:var(--b)"><span class="dot dot-b"></span> Domain B</div>
+      <input class="domain-input" id="inputB" placeholder="e.g. cancer immunotherapy" autocomplete="off">
+      <div class="domain-hint">Any field — the more unexpected the better</div>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="ctrl-bar">
+    <select class="ctrl-sel" id="paperCount"><option value="20">20 papers/domain</option><option value="30" selected>30 papers/domain</option><option value="50">50 papers/domain</option></select>
+    <select class="ctrl-sel" id="yearsBack"><option value="3">3 years</option><option value="5" selected>5 years</option><option value="10">10 years</option></select>
+    <button class="btn btn-nx" id="scanBtn" onclick="startCollision()">⚡ COLLIDE</button>
+    <button class="btn btn-ghost" onclick="randomCollision()">🎲 Surprise Me</button>
+    <button class="btn btn-ghost" onclick="openModal('reportModal')">📡 Report</button>
+    <button class="btn btn-ghost" onclick="exportCSV()">📊 CSV</button>
+  </div>
+
+  <!-- API KEYS -->
+  <div class="api-toggle" onclick="toggleApi()"><span id="apiArrow">▸</span> API Keys (optional) <span class="api-dots" id="apiDots"></span></div>
+  <div class="api-panel" id="apiPanel">
+    <div class="api-item"><label>Claude (Collision Hypotheses)</label><input type="password" id="key-claude" placeholder="sk-ant-..." oninput="saveKeys()"></div>
+    <div class="api-note">Claude powers collision hypothesis generation and deep cross-domain analysis. Everything else — paper search, concept extraction, bridge detection — works without any keys.</div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap" id="progWrap">
+    <div class="prog-bar-bg"><div class="prog-bar" id="progBar"></div></div>
+    <div class="prog-label" id="progLabel">Initializing...</div>
+    <div class="step-row" id="stepRow"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-bar">
+    <div class="stat-card"><div class="stat-val" id="st-pa">0</div><div class="stat-lbl">Domain A</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-pb">0</div><div class="stat-lbl">Domain B</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-collisions">0</div><div class="stat-lbl">Collisions</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-bridge">0</div><div class="stat-lbl">Bridge Papers</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-concepts">0</div><div class="stat-lbl">Shared Concepts</div></div>
+    <div class="stat-card"><div class="stat-val" id="st-researchers">0</div><div class="stat-lbl">Bridge Researchers</div></div>
+    <div class="stat-card" style="cursor:help" title="Click for breakdown" onclick="showScoreBreakdown()"><div class="stat-val" id="st-nexus">—</div><div class="stat-lbl">Nexus Score</div><div id="scoreBreakdown" style="display:none;font-family:var(--ff-mono);font-size:8px;color:var(--text-dim);margin-top:4px;line-height:1.6;text-align:left"></div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab-btn on" onclick="tab('collisions',this)">⚡ Collisions</button>
+    <button class="tab-btn" onclick="tab('concepts',this)">🔬 Concepts</button>
+    <button class="tab-btn" onclick="tab('bridges',this)">🌉 Bridge Papers</button>
+    <button class="tab-btn" onclick="tab('researchers',this)">👥 Bridge Researchers</button>
+    <button class="tab-btn" onclick="tab('hypo',this)">🧪 Hypotheses</button>
+    <button class="tab-btn" onclick="tab('domain-a',this)">🔥 Domain A Gaps</button>
+    <button class="tab-btn" onclick="tab('domain-b',this)">💧 Domain B Gaps</button>
+    <button class="tab-btn" onclick="tab('papers',this)">📄 All Papers</button>
+  </div>
+
+  <!-- PANES -->
+  <div class="tab-pane on" id="pane-collisions"><div class="empty"><div class="empty-text">Enter two research domains and hit Collide to discover where they meet</div></div></div>
+  <div class="tab-pane" id="pane-concepts"><div class="empty"><div class="empty-text">Shared and unique concepts will appear here</div></div></div>
+  <div class="tab-pane" id="pane-bridges"><div class="empty"><div class="empty-text">Papers that reference both domains — the rarest and most valuable</div></div></div>
+  <div class="tab-pane" id="pane-researchers"><div class="empty"><div class="empty-text">Scientists who publish across both fields</div></div></div>
+  <div class="tab-pane" id="pane-hypo">
+    <div class="btn-row" style="margin-bottom:14px"><button class="btn btn-nx" onclick="generateHypotheses()">🧪 Generate Collision Hypotheses</button></div>
+    <div id="hypoList"><div class="empty"><div class="empty-text">AI-generated hypotheses bridging both domains</div></div></div>
+  </div>
+  <div class="tab-pane" id="pane-domain-a"><div class="empty"><div class="empty-text">Domain A gaps will appear after collision scan</div></div></div>
+  <div class="tab-pane" id="pane-domain-b"><div class="empty"><div class="empty-text">Domain B gaps will appear after collision scan</div></div></div>
+  <div class="tab-pane" id="pane-papers"><div class="empty"><div class="empty-text">All papers from both domains</div></div></div>
+
+  <!-- REPORT MODAL -->
+  <div class="modal-bg" id="reportModal">
+    <div class="modal">
+      <button class="modal-x" onclick="closeModal('reportModal')">×</button>
+      <h3>📡 Collision Report</h3>
+      <button class="btn btn-nx" onclick="generateReport()" style="margin-bottom:12px">Generate Report</button>
+      <div id="reportOut" style="background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--ff-mono);font-size:10px;line-height:1.6;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text-mid)">Run a collision scan first, then generate your report.</div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-ghost" onclick="copyReport()">📋 Copy</button>
+        <button class="btn btn-ghost" onclick="downloadReport()">💾 Download</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSOLE -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+    <div style="font-family:var(--ff-mono);font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase">Collision Log</div>
+    <button class="btn btn-ghost" onclick="exportLogs()" style="font-size:9px;padding:3px 8px">Export</button>
+  </div>
+  <div class="console" id="console"></div>
+
+  <!-- FOOTER -->
+  <div style="text-align:center;padding:36px 0 0;font-size:11px;color:var(--text-dim);line-height:2;">
+    <div style="font-family:var(--ff-head);font-size:15px;color:var(--nx);margin-bottom:4px">Kristal Nexus v1.0</div>
+    Free for researchers worldwide. No accounts, no paywalls, no data collection.<br>
+    Built by Mullair Jeudi, MD · <a href="https://kristallabs.dev" target="_blank" style="color:var(--nx);text-decoration:none">Kristal Labs</a> · Named after my niece Kristal.
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let S = {
+  a:'', b:'',
+  papersA:[], papersB:[], allPapers:[],
+  conceptsA:new Map(), conceptsB:new Map(), sharedConcepts:[],
+  bridgePapers:[], bridgeResearchers:[],
+  gapsA:[], gapsB:[], collisions:[],
+  hypos:[], nexusScore:0, reportMd:'',
+  keys:{claude:''}
+};
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function init(){
+  try{ S.keys.claude=localStorage.getItem('knx_claude')||''; document.getElementById('key-claude').value=S.keys.claude; }catch(e){}
+  renderApiDots();
+  clog('Kristal Nexus initialized — cross-domain collision engine ready','sys');
+  clog('Core: OpenAlex + arXiv + PubMed — zero API keys required','ok');
+}
+
+function saveKeys(){ S.keys.claude=document.getElementById('key-claude').value.trim(); try{localStorage.setItem('knx_claude',S.keys.claude)}catch(e){} renderApiDots(); }
+function renderApiDots(){ document.getElementById('apiDots').innerHTML=`<div class="api-dot ${S.keys.claude?'on':''}"></div>`; }
+function toggleApi(){ const p=document.getElementById('apiPanel'); p.classList.toggle('open'); document.getElementById('apiArrow').textContent=p.classList.contains('open')?'▾':'▸'; }
+function tab(id,btn){ document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('on')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on')); document.getElementById('pane-'+id).classList.add('on'); btn.classList.add('on'); }
+
+// ═══════════════════════════════════════════════
+// MAIN COLLISION PIPELINE
+// ═══════════════════════════════════════════════
+async function startCollision(){
+  const a=document.getElementById('inputA').value.trim();
+  const b=document.getElementById('inputB').value.trim();
+  if(!a||!b){toast('Enter both domains','warn');return;}
+
+  S.a=a; S.b=b;
+  S.papersA=[]; S.papersB=[]; S.allPapers=[]; S.bridgePapers=[]; S.bridgeResearchers=[];
+  S.conceptsA=new Map(); S.conceptsB=new Map(); S.sharedConcepts=[];
+  S.gapsA=[]; S.gapsB=[]; S.collisions=[]; S.hypos=[];
+
+  document.getElementById('scanBtn').disabled=true;
+  showProg(true);
+  const steps=['Domain A: OpenAlex','Domain A: arXiv','Domain B: OpenAlex','Domain B: arXiv','PubMed Bridge','Concepts','Bridge Papers','Bridge Researchers','Gap Detection','Collision Detection','Nexus Score','AI Analysis'];
+  renderSteps(steps);
+
+  const max=parseInt(document.getElementById('paperCount').value);
+
+  try{
+    // ── DOMAIN A ──
+    setStep(0,'active'); setProg(5,'Scanning Domain A...');
+    S.papersA.push(...await searchOpenAlex(a,max,'A'));
+    setStep(0,'done');
+
+    setStep(1,'active'); setProg(12,'arXiv Domain A...');
+    S.papersA.push(...await searchArxiv(a,15,'A'));
+    setStep(1,'done');
+
+    // ── DOMAIN B ──
+    setStep(2,'active'); setProg(22,'Scanning Domain B...');
+    S.papersB.push(...await searchOpenAlex(b,max,'B'));
+    setStep(2,'done');
+
+    setStep(3,'active'); setProg(32,'arXiv Domain B...');
+    S.papersB.push(...await searchArxiv(b,15,'B'));
+    setStep(3,'done');
+
+    // ── PUBMED BRIDGE ──
+    setStep(4,'active'); setProg(40,'PubMed bridge search...');
+    const bridgeQ=`(${a}) AND (${b})`;
+    const pmBridge=await searchPubMed(bridgeQ,10);
+    pmBridge.forEach(p=>{p.domain='BRIDGE';p.isBridge=true;});
+    S.allPapers=[...S.papersA,...S.papersB,...pmBridge];
+    setStep(4,'done');
+
+    updStat('st-pa',S.papersA.length);
+    updStat('st-pb',S.papersB.length);
+    renderPapers();
+
+    // ── CONCEPT EXTRACTION ──
+    setStep(5,'active'); setProg(50,'Extracting concepts...');
+    extractConcepts();
+    setStep(5,'done');
+
+    // ── BRIDGE PAPERS ──
+    setStep(6,'active'); setProg(58,'Finding bridge papers...');
+    findBridgePapers(pmBridge);
+    setStep(6,'done');
+
+    // ── BRIDGE RESEARCHERS ──
+    setStep(7,'active'); setProg(64,'Mapping bridge researchers...');
+    findBridgeResearchers();
+    setStep(7,'done');
+
+    // ── GAP DETECTION ──
+    setStep(8,'active'); setProg(72,'Detecting gaps per domain...');
+    S.gapsA=detectGaps(S.papersA,S.a);
+    S.gapsB=detectGaps(S.papersB,S.b);
+    renderDomainGaps();
+    setStep(8,'done');
+
+    // ── COLLISION DETECTION ──
+    setStep(9,'active'); setProg(80,'Finding collision points...');
+    detectCollisions();
+    setStep(9,'done');
+
+    // ── NEXUS SCORE ──
+    setStep(10,'active'); setProg(88,'Computing Nexus Score...');
+    computeNexusScore();
+    setStep(10,'done');
+
+    // ── AI ANALYSIS ──
+    if(S.keys.claude){
+      setStep(11,'active'); setProg(94,'AI collision analysis...');
+      await aiCollisionAnalysis();
+      setStep(11,'done');
+    } else { setStep(11,'done'); }
+
+    setProg(100,'Collision complete!');
+    clog(`Collision complete: ${S.collisions.length} collision points · Nexus Score: ${S.nexusScore}`,'ok');
+    toast(`${S.collisions.length} collisions found · Nexus Score: ${S.nexusScore}`,'ok');
+
+  }catch(e){
+    clog('Error: '+e.message,'err');
+    toast('Error: '+e.message,'err');
+  }
+  document.getElementById('scanBtn').disabled=false;
+}
+
+// ═══════════════════════════════════════════════
+// DATA SOURCES
+// ═══════════════════════════════════════════════
+async function searchOpenAlex(q,max,domain){
+  clog(`OpenAlex [${domain}]: "${q}"...`,'info');
+  const url=`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per_page=${Math.min(max,50)}&sort=relevance_score:desc&mailto=nexus@kristallabs.dev`;
+  const r=await fetch(url); const d=await r.json();
+  const results=d.results||[];
+  clog(`OpenAlex [${domain}]: ${results.length} papers`,'ok');
+  return results.map(r=>({
+    id:'oa-'+(r.id?.replace('https://openalex.org/','')||Date.now()),
+    source:'OpenAlex', domain,
+    title:r.title||'Untitled',
+    authors:(r.authorships||[]).map(a=>a.author?.display_name).filter(Boolean).slice(0,3).join(', '),
+    year:r.publication_year||'',
+    journal:r.primary_location?.source?.display_name||'',
+    url:r.doi?`https://doi.org/${r.doi.replace('https://doi.org/','')}`:r.id||'#',
+    abstract:r.abstract_inverted_index?rebuildAbs(r.abstract_inverted_index):'',
+    cited:r.cited_by_count||0,
+    concepts:(r.concepts||[]).slice(0,6).map(c=>({name:c.display_name,score:c.score||0})),
+    counts_by_year:r.counts_by_year||[]
+  }));
+}
+
+function rebuildAbs(inv){ if(!inv)return''; const w=[]; Object.entries(inv).forEach(([word,pos])=>pos.forEach(p=>w[p]=word)); return w.filter(Boolean).join(' '); }
+
+async function searchArxiv(q,max,domain){
+  clog(`arXiv [${domain}]: "${q}"...`,'info');
+  try{
+    const url=`https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(q)}&start=0&max_results=${max}&sortBy=submittedDate&sortOrder=descending`;
+    const r=await fetch(url); const t=await r.text();
+    const xml=new DOMParser().parseFromString(t,'text/xml');
+    const papers=[];
+    xml.querySelectorAll('entry').forEach(e=>{
+      const id=e.querySelector('id')?.textContent||'';
+      papers.push({
+        id:'arxiv-'+id.replace('http://arxiv.org/abs/',''), source:'arXiv', domain,
+        title:e.querySelector('title')?.textContent?.replace(/\n/g,' ').trim()||'',
+        authors:Array.from(e.querySelectorAll('author name')).map(a=>a.textContent).slice(0,3).join(', '),
+        year:e.querySelector('published')?.textContent?.slice(0,4)||'',
+        journal:Array.from(e.querySelectorAll('category')).map(c=>c.getAttribute('term')).slice(0,2).join(', ')||'arXiv',
+        url:id, abstract:e.querySelector('summary')?.textContent?.replace(/\n/g,' ').trim()||'',
+        cited:0, concepts:[]
+      });
+    });
+    clog(`arXiv [${domain}]: ${papers.length} preprints`,'ok');
+    return papers;
+  }catch(e){ clog('arXiv error: '+e.message,'warn'); return []; }
+}
+
+async function searchPubMed(q,max){
+  clog(`PubMed bridge: "${q}"...`,'info');
+  try{
+    let url=`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(q)}&retmax=${max}&retmode=json&sort=relevance`;
+    const r=await fetch(url); const d=await r.json();
+    const ids=d.esearchresult?.idlist||[];
+    if(!ids.length){clog('PubMed: 0 bridge papers','info'); return [];}
+
+    let sUrl=`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json`;
+    const sr=await fetch(sUrl); const sd=await sr.json();
+    const papers=[];
+    for(const id of ids){
+      const p=sd.result?.[id]; if(!p)continue;
+      papers.push({
+        id:'pm-'+id, source:'PubMed', domain:'BRIDGE',
+        title:p.title||'Untitled',
+        authors:(p.authors||[]).map(a=>a.name).slice(0,3).join(', '),
+        year:p.pubdate?.split(' ')[0]||'',
+        journal:p.fulljournalname||p.source||'',
+        url:`https://pubmed.ncbi.nlm.nih.gov/${id}/`,
+        abstract:'', cited:0, concepts:[]
+      });
+    }
+    clog(`PubMed bridge: ${papers.length} cross-domain papers found`,'nx');
+    return papers;
+  }catch(e){ clog('PubMed error: '+e.message,'warn'); return []; }
+}
+
+// ═══════════════════════════════════════════════
+// CONCEPT EXTRACTION & OVERLAP
+// ═══════════════════════════════════════════════
+function extractConcepts(){
+  S.papersA.forEach(p=>(p.concepts||[]).forEach(c=>{
+    const n=c.name?.toLowerCase(); if(!n||n.length<3)return;
+    S.conceptsA.set(n,(S.conceptsA.get(n)||0)+1);
+  }));
+  S.papersB.forEach(p=>(p.concepts||[]).forEach(c=>{
+    const n=c.name?.toLowerCase(); if(!n||n.length<3)return;
+    S.conceptsB.set(n,(S.conceptsB.get(n)||0)+1);
+  }));
+
+  // Also extract keyword-level concepts from abstracts
+  const extractKw=(papers,map)=>{
+    const stopwords=new Set(['the','and','for','that','this','with','from','are','was','were','been','have','has','had','not','but','what','all','can','her','one','our','out','its','also','how','more','most','very','just','about','into','over','such','than','them','then','these','those','only','other','some','would','make','like','time','each','which','their','will','way','may','many','using','used','between','through','during','both','after','before','being','where','same','when','there','could','should','because','while','does','did','been','further','still','here','either','whether','without','within','among','upon']);
+    const allText=papers.map(p=>p.abstract||p.title||'').join(' ').toLowerCase();
+    const words=allText.split(/\W+/).filter(w=>w.length>4&&!stopwords.has(w));
+    const freq={};
+    words.forEach(w=>freq[w]=(freq[w]||0)+1);
+    Object.entries(freq).filter(([_,c])=>c>=2).sort((a,b)=>b[1]-a[1]).slice(0,40).forEach(([w,c])=>map.set(w,(map.get(w)||0)+c));
+  };
+  extractKw(S.papersA,S.conceptsA);
+  extractKw(S.papersB,S.conceptsB);
+
+  // Find shared
+  const shared=[];
+  S.conceptsA.forEach((countA,concept)=>{
+    if(S.conceptsB.has(concept)){
+      shared.push({name:concept, inA:countA, inB:S.conceptsB.get(concept), total:countA+S.conceptsB.get(concept)});
+    }
+  });
+  S.sharedConcepts=shared.sort((a,b)=>b.total-a.total).slice(0,30);
+
+  updStat('st-concepts',S.sharedConcepts.length);
+  clog(`Concepts: ${S.conceptsA.size} in A, ${S.conceptsB.size} in B, ${S.sharedConcepts.length} shared`,'nx');
+  renderConcepts();
+}
+
+function renderConcepts(){
+  const el=document.getElementById('pane-concepts');
+  const shared=S.sharedConcepts.slice(0,20);
+  const aOnly=[...S.conceptsA.entries()].filter(([c])=>!S.conceptsB.has(c)).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const bOnly=[...S.conceptsB.entries()].filter(([c])=>!S.conceptsA.has(c)).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  el.innerHTML=`
+    <div class="sec-h"><span class="tag-nx">⚡</span> Shared Concepts — the collision vocabulary</div>
+    <div class="concept-cloud">${shared.map(c=>`<span class="concept-tag shared">${c.name} <span style="opacity:0.5;font-size:9px">${c.total}</span></span>`).join('')}</div>
+    ${shared.length===0?'<div style="color:var(--text-dim);font-size:12px;margin:10px 0">No shared concepts found — these fields are highly disjoint. That means collisions here would be truly novel.</div>':''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+      <div>
+        <div class="sec-h" style="font-size:16px"><span class="tag-a">🔥</span> Unique to Domain A</div>
+        <div class="concept-cloud">${aOnly.map(([c,n])=>`<span class="concept-tag a-only">${c}</span>`).join('')}</div>
+      </div>
+      <div>
+        <div class="sec-h" style="font-size:16px"><span class="tag-b">💧</span> Unique to Domain B</div>
+        <div class="concept-cloud">${bOnly.map(([c,n])=>`<span class="concept-tag b-only">${c}</span>`).join('')}</div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// BRIDGE PAPERS
+// ═══════════════════════════════════════════════
+function findBridgePapers(pmBridge){
+  // PubMed AND-query papers are definite bridges
+  S.bridgePapers=[...pmBridge];
+
+  // Also find OpenAlex papers from A that mention B concepts (and vice versa)
+  const bKeywords=S.b.toLowerCase().split(/\s+/).filter(w=>w.length>3);
+  const aKeywords=S.a.toLowerCase().split(/\s+/).filter(w=>w.length>3);
+
+  S.papersA.forEach(p=>{
+    const txt=(p.title+' '+p.abstract).toLowerCase();
+    if(bKeywords.some(k=>txt.includes(k))){
+      S.bridgePapers.push({...p, domain:'BRIDGE', isBridge:true});
+    }
+  });
+  S.papersB.forEach(p=>{
+    const txt=(p.title+' '+p.abstract).toLowerCase();
+    if(aKeywords.some(k=>txt.includes(k))){
+      S.bridgePapers.push({...p, domain:'BRIDGE', isBridge:true});
+    }
+  });
+
+  // Dedupe by title
+  const seen=new Set();
+  S.bridgePapers=S.bridgePapers.filter(p=>{
+    const key=p.title.toLowerCase().slice(0,50);
+    if(seen.has(key))return false;
+    seen.add(key); return true;
+  });
+
+  updStat('st-bridge',S.bridgePapers.length);
+  clog(`Bridge papers: ${S.bridgePapers.length} found (cross-referencing both domains)`,'nx');
+  renderBridgePapers();
+}
+
+function renderBridgePapers(){
+  const el=document.getElementById('pane-bridges');
+  if(!S.bridgePapers.length){el.innerHTML='<div class="empty"><div class="empty-text">No bridge papers found — this is a wide-open collision zone</div></div>';return;}
+  el.innerHTML=`<div class="sec-h"><span class="tag-nx">🌉</span> Bridge Papers — connecting both worlds</div>`+
+    S.bridgePapers.slice(0,15).map((p,i)=>`
+      <div class="paper-item">
+        <div style="display:flex;gap:6px;margin-bottom:4px;align-items:center">
+          <span class="paper-source src-bridge">BRIDGE</span>
+          <span class="paper-source src-openalex">${p.source}</span>
+          ${p.cited>0?`<span style="font-family:var(--ff-mono);font-size:9px;color:var(--text-dim)">${p.cited} cited</span>`:''}
+          <button onclick="copyCitation(${i})" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-size:8px;padding:2px 6px;cursor:pointer;font-family:var(--ff-mono)" title="Copy citation">📋 Cite</button>
+        </div>
+        <div class="paper-title"><a href="${p.url}" target="_blank">${p.title}</a></div>
+        <div class="paper-meta"><span>${p.authors}</span><span>${p.journal}</span><span>${p.year}</span></div>
+      </div>`).join('');
+}
+
+function copyCitation(idx){
+  const p=S.bridgePapers[idx];if(!p)return;
+  const cite=`${p.authors} (${p.year}). ${p.title}. ${p.journal}. ${p.url}`;
+  navigator.clipboard.writeText(cite).then(()=>toast('Citation copied','ok'));
+}
+
+// ═══════════════════════════════════════════════
+// BRIDGE RESEARCHERS
+// ═══════════════════════════════════════════════
+function findBridgeResearchers(){
+  const authA=new Map(), authB=new Map();
+  S.papersA.forEach(p=>(p.authors||'').split(', ').filter(Boolean).forEach(n=>{if(n.length>2)authA.set(n,(authA.get(n)||0)+1);}));
+  S.papersB.forEach(p=>(p.authors||'').split(', ').filter(Boolean).forEach(n=>{if(n.length>2)authB.set(n,(authB.get(n)||0)+1);}));
+
+  // Also check bridge papers
+  S.bridgePapers.forEach(p=>(p.authors||'').split(', ').filter(Boolean).forEach(n=>{
+    if(n.length>2){authA.set(n,(authA.get(n)||0)+1);authB.set(n,(authB.get(n)||0)+1);}
+  }));
+
+  const bridges=[];
+  authA.forEach((cA,name)=>{if(authB.has(name)){bridges.push({name,inA:cA,inB:authB.get(name),total:cA+authB.get(name)});}});
+  S.bridgeResearchers=bridges.sort((a,b)=>b.total-a.total).slice(0,15);
+
+  updStat('st-researchers',S.bridgeResearchers.length);
+  clog(`Bridge researchers: ${S.bridgeResearchers.length} publish in both domains`,'nx');
+  renderBridgeResearchers();
+}
+
+function renderBridgeResearchers(){
+  const el=document.getElementById('pane-researchers');
+  if(!S.bridgeResearchers.length){el.innerHTML='<div class="empty"><div class="empty-text">No researchers found publishing in both fields — pioneers wanted</div></div>';return;}
+  const initials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  el.innerHTML=`<div class="sec-h"><span class="tag-nx">👥</span> Bridge Researchers — active in both domains</div>`+
+    S.bridgeResearchers.map(r=>`
+      <div class="bridge-card">
+        <div class="bridge-avatar">${initials(r.name)}</div>
+        <div><div class="bridge-name">${r.name}</div><div class="bridge-detail">${r.inA} papers in A · ${r.inB} in B</div></div>
+        <div class="bridge-count">${r.total} total</div>
+      </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// GAP DETECTION (PER DOMAIN)
+// ═══════════════════════════════════════════════
+function detectGaps(papers,domain){
+  const txt=papers.map(p=>(p.abstract||p.title||'')).join(' ').toLowerCase();
+  const len=txt.length;
+  const gaps=[];
+  // Keyword density scoring (deterministic)
+  const density=(rx)=>{const m=txt.match(rx);return m?Math.min(25,m.length*3):0;};
+  const patterns=[
+    {cat:'Methodology Gap',icon:'🔬',test:t=>/small sample|underpowered|retrospective|pilot study|case report|no rct|observational|limited data/.test(t),desc:d=>`Methodological limitations dominate ${d} literature — few rigorous large-scale studies`,
+      urg:t=>70+density(/small sample|underpowered|limited/g),fund:t=>60+density(/rct|clinical|trial/g),innov:t=>55+density(/novel|new approach|innovative/g),eq:t=>50+density(/access|equity|diversity/g)},
+    {cat:'Mechanistic Gap',icon:'⚙️',test:t=>/unknown mechanism|poorly understood|unclear|not fully|remains elusive|pathogenesis|etiology/.test(t),desc:d=>`Core mechanisms in ${d} remain incompletely characterized`,
+      urg:t=>75+density(/unknown|unclear|elusive/g),fund:t=>65+density(/mechanism|pathway|molecular/g),innov:t=>70+density(/novel|hypothesis|model/g),eq:t=>45+density(/access|global/g)},
+    {cat:'Translation Gap',icon:'💊',test:t=>/no approved|limited.*treatment|unmet need|therapeutic.*gap|clinical.*translation|bench to bedside/.test(t),desc:d=>`Translational gap in ${d} — findings not yet reaching practical application`,
+      urg:t=>80+density(/unmet|urgent|critical/g),fund:t=>70+density(/therapeutic|treatment|drug/g),innov:t=>55+density(/translat|clinical|bench/g),eq:t=>60+density(/access|afford|disparit/g)},
+    {cat:'Population Gap',icon:'👥',test:t=>/underrepresent|diversity|excluded|minority|inequit|access|global south|developing/.test(t),desc:d=>`Equity gap in ${d} — underrepresented groups and regions lack research participation`,
+      urg:t=>70+density(/underrepresent|excluded|minority/g),fund:t=>60+density(/equity|diversity|inclusion/g),innov:t=>55+density(/novel|new|first/g),eq:t=>80+density(/equity|disparit|access|global/g)},
+    {cat:'Reproducibility Gap',icon:'📋',test:t=>/reproduc|replicat|validation|independent confirm|inconsistent|contradictory/.test(t),desc:d=>`Key results in ${d} lack independent replication`,
+      urg:t=>68+density(/reproduc|replicat|inconsistent/g),fund:t=>58+density(/valid|confirm|standard/g),innov:t=>60+density(/method|protocol|framework/g),eq:t=>50+density(/open|access|transparent/g)},
+    {cat:'Computational Gap',icon:'💻',test:t=>/simulation|model.*limit|computational.*cost|algorithm|machine learning|data.*pipeline|scalab/.test(t),desc:d=>`Computational approaches in ${d} lag behind data availability and theoretical demand`,
+      urg:t=>65+density(/computational|scalab|limit/g),fund:t=>70+density(/algorithm|machine|data|ai/g),innov:t=>75+density(/novel|deep learning|model/g),eq:t=>50+density(/open source|access|free/g)}
+  ];
+  patterns.forEach(p=>{if(p.test(txt))gaps.push({cat:p.cat,icon:p.icon,desc:p.desc(domain),urgency:Math.min(100,p.urg(txt)),fundability:Math.min(100,p.fund(txt)),innovation:Math.min(100,p.innov(txt)),equity:Math.min(100,p.eq(txt))});});
+  if(gaps.length<2)gaps.push({cat:'Open Frontier',icon:'🌌',desc:`${domain} contains broad unexplored territory ripe for systematic investigation`,urgency:65,fundability:60,innovation:70,equity:55});
+  return gaps;
+}
+
+function renderDomainGaps(){
+  const renderOne=(gaps,el,cls)=>{
+    document.getElementById(el).innerHTML=gaps.map((g,i)=>`
+      <div class="gap-card ${cls}">
+        <div style="font-family:var(--ff-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">${g.icon} GAP ${i+1}</div>
+        <div class="gap-cat">${g.cat}</div>
+        <div class="gap-desc">${g.desc}</div>
+        <div class="gap-q-row">
+          <div class="gap-q-mini"><div class="gap-q-val" style="color:var(--rose)">${g.urgency}</div><div class="gap-q-lbl">Urgency</div></div>
+          <div class="gap-q-mini"><div class="gap-q-val" style="color:var(--teal)">${g.fundability}</div><div class="gap-q-lbl">Fund.</div></div>
+          <div class="gap-q-mini"><div class="gap-q-val" style="color:var(--b)">${g.innovation}</div><div class="gap-q-lbl">Innov.</div></div>
+          <div class="gap-q-mini"><div class="gap-q-val" style="color:var(--nx)">${g.equity}</div><div class="gap-q-lbl">Equity</div></div>
+        </div>
+      </div>`).join('');
+  };
+  renderOne(S.gapsA,'pane-domain-a','ga');
+  renderOne(S.gapsB,'pane-domain-b','gb');
+}
+
+// ═══════════════════════════════════════════════
+// COLLISION DETECTION — THE CORE INNOVATION
+// ═══════════════════════════════════════════════
+function detectCollisions(){
+  const collisions=[];
+
+  // 1. Gap-to-Strength collisions: Where A's gap maps to B's strength (and vice versa)
+  S.gapsA.forEach(gA=>{
+    S.gapsB.forEach(gB=>{
+      // If both domains share a gap type, that's a collaboration collision
+      if(gA.cat===gB.cat){
+        collisions.push({
+          type:'Shared Blind Spot',
+          title:`Both fields have a ${gA.cat} — joint methodology could solve both`,
+          desc:`"${S.a}" and "${S.b}" independently report a ${gA.cat.toLowerCase()}. A cross-domain collaboration could design studies that address both gaps simultaneously, sharing methodological innovations and doubling statistical power.`,
+          fromA:gA.cat, fromB:gB.cat,
+          strength:Math.round((gA.urgency+gB.urgency)/2)
+        });
+      }
+    });
+  });
+
+  // 2. Concept overlap collisions
+  S.sharedConcepts.slice(0,5).forEach(c=>{
+    collisions.push({
+      type:'Concept Bridge',
+      title:`"${c.name}" appears in both fields but may mean different things`,
+      desc:`The concept "${c.name}" appears ${c.inA}× in ${S.a} and ${c.inB}× in ${S.b}. This shared vocabulary suggests a connection point where techniques or findings from one domain could directly transfer to the other. The cross-citation deficit here indicates this bridge is underexploited.`,
+      fromA:c.name, fromB:c.name,
+      strength:Math.min(95,50+c.total*3)
+    });
+  });
+
+  // 3. Bridge paper scarcity collision
+  if(S.bridgePapers.length<5){
+    collisions.push({
+      type:'White Space',
+      title:`Only ${S.bridgePapers.length} papers bridge these fields — massive opportunity`,
+      desc:`With ${S.papersA.length} papers in "${S.a}" and ${S.papersB.length} in "${S.b}", only ${S.bridgePapers.length} reference both. This cross-citation deficit of ${(100-Math.round(S.bridgePapers.length/(S.papersA.length+S.papersB.length)*100))}% signals a wide-open research frontier where any bridging work would be highly novel and citable.`,
+      fromA:'literature', fromB:'literature',
+      strength:Math.min(95,90-S.bridgePapers.length*5)
+    });
+  }
+
+  // 4. Researcher bridge collision
+  if(S.bridgeResearchers.length>0){
+    collisions.push({
+      type:'Human Bridge',
+      title:`${S.bridgeResearchers.length} researcher${S.bridgeResearchers.length>1?'s':''} already work across both fields`,
+      desc:`${S.bridgeResearchers.slice(0,3).map(r=>r.name).join(', ')}${S.bridgeResearchers.length>3?' and others':''} publish in both "${S.a}" and "${S.b}". These bridge researchers are natural collaborators and potential co-PIs for cross-domain proposals.`,
+      fromA:'researchers', fromB:'researchers',
+      strength:60+Math.min(30,S.bridgeResearchers.length*5)
+    });
+  } else {
+    collisions.push({
+      type:'Pioneer Territory',
+      title:'Zero researchers publish in both fields — first-mover advantage',
+      desc:`No identified researchers currently publish across "${S.a}" and "${S.b}". This means any cross-domain work here would be pioneering — with no competition and high novelty scores for grant reviewers.`,
+      fromA:'researchers', fromB:'researchers',
+      strength:88
+    });
+  }
+
+  // Sort by strength
+  S.collisions=collisions.sort((a,b)=>b.strength-a.strength);
+  updStat('st-collisions',S.collisions.length);
+  renderCollisions();
+}
+
+function renderCollisions(){
+  const el=document.getElementById('pane-collisions');
+  if(!S.collisions.length){el.innerHTML='<div class="empty"><div class="empty-text">No collisions detected</div></div>';return;}
+  el.innerHTML=S.collisions.map((c,i)=>`
+    <div class="coll-card">
+      <div class="nx-score-bar"><div class="nx-score-val">${c.strength}</div><div class="nx-score-lbl">Strength</div></div>
+      <div class="coll-rank">⚡ COLLISION ${i+1} · ${c.type.toUpperCase()}</div>
+      <div class="coll-title">${c.title}</div>
+      <div class="coll-desc">${c.desc}</div>
+      <div class="coll-domains">
+        <span class="coll-dtag da">🔥 ${S.a}</span>
+        <span class="coll-dtag db">💧 ${S.b}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// NEXUS SCORE™
+// ═══════════════════════════════════════════════
+function computeNexusScore(){
+  const conceptOverlap=Math.min(40,S.sharedConcepts.length*3);
+  const bridgeDeficit=S.bridgePapers.length<3?30:S.bridgePapers.length<10?20:10;
+  const researcherBridge=Math.min(15,S.bridgeResearchers.length*5);
+  const collisionCount=Math.min(15,S.collisions.length*3);
+  S.nexusScore=Math.min(100,conceptOverlap+bridgeDeficit+researcherBridge+collisionCount);
+  S.scoreComponents={conceptOverlap,bridgeDeficit,researcherBridge,collisionCount};
+  updStat('st-nexus',S.nexusScore);
+  clog(`Nexus Score: ${S.nexusScore}/100 (Overlap:${conceptOverlap} Deficit:${bridgeDeficit} Researchers:${researcherBridge} Collisions:${collisionCount})`,'nx');
+}
+
+function showScoreBreakdown(){
+  const el=document.getElementById('scoreBreakdown');
+  if(!S.scoreComponents){el.style.display='none';return;}
+  const c=S.scoreComponents;
+  el.style.display=el.style.display==='none'?'block':'none';
+  el.innerHTML=`Overlap: ${c.conceptOverlap}/40<br>Citation gap: ${c.bridgeDeficit}/30<br>Researchers: ${c.researcherBridge}/15<br>Collisions: ${c.collisionCount}/15`;
+}
+
+function randomCollision(){
+  const pairs=[
+    ['cancer immunotherapy','space radiation biology'],['gut microbiome','machine learning'],
+    ['quantum computing','drug discovery'],['climate change','infectious disease'],
+    ['virtual reality','surgical training'],['blockchain','clinical trials'],
+    ['sleep science','artificial intelligence'],['ocean acoustics','neuroscience'],
+    ['materials science','wound healing'],['game theory','antibiotic resistance'],
+    ['mycology','architecture'],['origami mathematics','cardiac stents'],
+    ['bioluminescence','deep sea mining'],['swarm intelligence','urban planning'],
+    ['music therapy','neuroplasticity'],['crispr','conservation biology'],
+    ['fermentation science','mental health'],['earthquake engineering','bone fracture'],
+    ['behavioral economics','vaccine hesitancy'],['polymer chemistry','neural interfaces']
+  ];
+  const pick=pairs[Math.floor(Math.random()*pairs.length)];
+  document.getElementById('domA').value=pick[0];
+  document.getElementById('domB').value=pick[1];
+  toast(`Random collision loaded: "${pick[0]}" × "${pick[1]}"`,'ok');
+  clog(`Random collision: ${pick[0]} × ${pick[1]}`,'nx');
+}
+
+function exportCSV(){
+  if(!S.bridgePapers.length&&!S.papersA.length){toast('Run a collision scan first','warn');return;}
+  const allPapers=[...S.papersA.map(p=>({...p,domain:'A'})),...S.papersB.map(p=>({...p,domain:'B'})),...S.bridgePapers.map(p=>({...p,domain:'Bridge'}))];
+  const esc=v=>'"'+(v||'').replace(/"/g,'""')+'"';
+  let csv='Domain,Source,Title,Authors,Year,Journal,URL,Cited\n';
+  allPapers.forEach(p=>{csv+=`${esc(p.domain)},${esc(p.source)},${esc(p.title)},${esc(p.authors)},${esc(p.year)},${esc(p.journal)},${esc(p.url)},${p.cited||0}\n`;});
+  // Add collisions sheet
+  if(S.collisions.length){
+    csv+='\n\nCollision Type,Title,Strength,Description\n';
+    S.collisions.forEach(c=>{csv+=`${esc(c.type)},${esc(c.title)},${c.strength||''},${esc(c.desc)}\n`;});
+  }
+  // Add shared concepts
+  if(S.sharedConcepts.length){
+    csv+='\n\nShared Concept,Count A,Count B\n';
+    S.sharedConcepts.forEach(c=>{csv+=`${esc(c.name)},${c.countA||0},${c.countB||0}\n`;});
+  }
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`nexus-${S.a||'domA'}-${S.b||'domB'}-${Date.now()}.csv`;a.click();URL.revokeObjectURL(url);
+  toast('CSV exported','ok');
+}
+
+// ═══════════════════════════════════════════════
+// AI COLLISION HYPOTHESES
+// ═══════════════════════════════════════════════
+async function aiCollisionAnalysis(){
+  if(!S.keys.claude)return;
+  clog('AI: generating collision-specific insights...','info');
+  try{
+    const topCollisions=S.collisions.slice(0,3).map(c=>`- ${c.type}: ${c.title}`).join('\n');
+    const sharedC=S.sharedConcepts.slice(0,8).map(c=>c.name).join(', ');
+    const prompt=`You are a cross-domain research analyst. Two fields have been scanned:
+Domain A: "${S.a}" (${S.papersA.length} papers)
+Domain B: "${S.b}" (${S.papersB.length} papers)
+Bridge papers found: ${S.bridgePapers.length}
+Shared concepts: ${sharedC||'very few'}
+Top collision points:
+${topCollisions}
+
+For each of the top 3 collisions, add ONE sentence of specific, actionable insight about why this collision matters and what a researcher should do about it. Return as JSON:
+[{"collision_index":0,"insight":"..."}]
+Return ONLY valid JSON.`;
+
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.keys.claude,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    });
+    const d=await r.json();
+    const text=d.content[0].text.trim().replace(/^```json\n?/,'').replace(/```$/,'');
+    const insights=JSON.parse(text);
+    insights.forEach(ins=>{if(S.collisions[ins.collision_index])S.collisions[ins.collision_index].aiInsight=ins.insight;});
+    renderCollisions();
+    clog(`AI: ${insights.length} collision insights added`,'ok');
+  }catch(e){clog('AI analysis partial: '+e.message,'warn');}
+}
+
+async function generateHypotheses(){
+  if(!S.collisions.length){toast('Run collision scan first','warn');return;}
+  if(!S.keys.claude){
+    S.hypos=builtInHypos();
+    renderHypos(); return;
+  }
+
+  clog('Generating cross-domain collision hypotheses...','info');
+  try{
+    const collCtx=S.collisions.slice(0,4).map(c=>`[${c.type}] ${c.title}: ${c.desc.slice(0,150)}`).join('\n');
+    const sharedC=S.sharedConcepts.slice(0,10).map(c=>c.name).join(', ');
+    const prompt=`You are NEXUS, a cross-domain hypothesis generator. Two fields collide:
+
+Domain A: "${S.a}"
+Domain B: "${S.b}"
+Shared concepts: ${sharedC||'minimal overlap'}
+Key collision points:
+${collCtx}
+
+Generate exactly 3 CROSS-DOMAIN hypotheses — each must bridge BOTH fields. For each:
+- Title (15-25 words — must reference both domains)
+- Rationale (2-3 sentences)
+- Methodology (2 sentences — must use techniques from BOTH fields)
+- Speculation: low/medium/high
+- Confidence: 0-100
+
+JSON: [{"title":"...","rationale":"...","methodology":"...","speculation":"medium","confidence":72}]
+Return ONLY valid JSON.`;
+
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.keys.claude,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})
+    });
+    const d=await r.json();
+    const text=d.content[0].text.trim().replace(/^```json\n?/,'').replace(/```$/,'');
+    S.hypos=JSON.parse(text);
+  }catch(e){
+    clog('Hypothesis error, using built-in: '+e.message,'warn');
+    S.hypos=builtInHypos();
+  }
+  renderHypos();
+  toast(`${S.hypos.length} collision hypotheses generated`,'ok');
+}
+
+function builtInHypos(){
+  return [
+    {title:`Methodological transfer from ${S.b} to ${S.a} could address the primary gap identified in Domain A's literature`,rationale:`Techniques developed in "${S.b}" address similar analytical challenges found in "${S.a}". The low cross-citation rate (${S.bridgePapers.length} bridge papers) suggests this transfer has not been attempted. Shared concepts like "${S.sharedConcepts[0]?.name||'overlapping methods'}" provide a natural entry point.`,methodology:`Systematic review of ${S.b} methodologies applicable to ${S.a} research questions. Pilot study applying the top-ranked technique to an established ${S.a} dataset with expert validation from both domains.`,speculation:'medium',confidence:68},
+    {title:`Shared conceptual framework between ${S.a} and ${S.b} reveals a universal principle operating across both domains`,rationale:`The ${S.sharedConcepts.length} shared concepts between these fields suggest underlying structural similarities. These parallels may reflect a deeper principle that, once formalized, could advance both fields simultaneously.`,methodology:`Quantitative concept mapping using the ${S.allPapers.length} papers from both scans. Network analysis of citation patterns and semantic similarity to identify the strongest conceptual bridges.`,speculation:'medium',confidence:62},
+    {title:`Cross-domain collaboration between ${S.a} and ${S.b} researchers could produce a novel framework with applications in both fields`,rationale:`With ${S.bridgeResearchers.length} researchers active in both domains, a natural collaboration network exists but remains underexploited. Joint proposals would score highly on interdisciplinary innovation criteria at NSF and NIH.`,methodology:`Workshop convening bridge researchers from both domains. Co-develop a shared research agenda and submit a collaborative R01/NSF proposal targeting the top collision point identified by this analysis.`,speculation:'low',confidence:78}
+  ];
+}
+
+function renderHypos(){
+  const el=document.getElementById('hypoList');
+  if(!S.hypos.length){el.innerHTML='<div class="empty"><div class="empty-text">Generate hypotheses first</div></div>';return;}
+  el.innerHTML=S.hypos.map((h,i)=>`
+    <div class="hypo-card ${i===0?'top-path':''}">
+      <div class="hypo-rank">COLLISION HYPOTHESIS ${i+1}</div>
+      <div class="hypo-title">${h.title}</div>
+      <div style="margin:10px 0"><div style="font-family:var(--ff-mono);font-size:9px;color:var(--a);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Rationale</div><div class="hypo-body">${h.rationale}</div></div>
+      <div><div style="font-family:var(--ff-mono);font-size:9px;color:var(--b);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Methodology</div><div class="hypo-body">${h.methodology}</div></div>
+      <div class="hypo-meta">
+        <span class="hypo-tag tag-conf">Confidence: ${h.confidence}%</span>
+        <span class="hypo-tag tag-spec-${h.speculation}">Speculation: ${h.speculation}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// RENDER PAPERS
+// ═══════════════════════════════════════════════
+function renderPapers(){
+  const el=document.getElementById('pane-papers');
+  const all=[...S.papersA,...S.papersB,...S.bridgePapers];
+  el.innerHTML=`<div style="font-family:var(--ff-mono);font-size:11px;color:var(--text-dim);margin-bottom:8px">${all.length} total papers</div>`+
+    all.slice(0,30).map(p=>{
+      const dcls=p.domain==='A'?'src-a':p.domain==='B'?'src-b':'src-bridge';
+      const dlbl=p.domain==='A'?'Domain A':p.domain==='B'?'Domain B':'Bridge';
+      return `<div class="paper-item">
+        <div style="display:flex;gap:6px;margin-bottom:3px">
+          <span class="paper-source ${dcls}">${dlbl}</span>
+          <span class="paper-source src-openalex">${p.source}</span>
+          ${p.cited>0?`<span style="font-family:var(--ff-mono);font-size:9px;color:var(--text-dim)">${p.cited} cited</span>`:''}
+        </div>
+        <div class="paper-title"><a href="${p.url}" target="_blank">${p.title}</a></div>
+        <div class="paper-meta"><span>${p.authors}</span><span>${p.year}</span></div>
+      </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// REPORT
+// ═══════════════════════════════════════════════
+function generateReport(){
+  if(!S.collisions.length){toast('Run collision first','warn');return;}
+  const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  let md=`# Cross-Domain Collision Report
+## "${S.a}" × "${S.b}"
+*Generated by Kristal Nexus v1.0 · ${now}*
+*Built by Mullair Jeudi, MD · Kristal Labs*
+
+---
+
+## Executive Summary
+
+Kristal Nexus scanned **${S.papersA.length}** papers in "${S.a}" and **${S.papersB.length}** papers in "${S.b}" across OpenAlex, arXiv, and PubMed. The collision analysis found **${S.collisions.length} collision points**, **${S.bridgePapers.length} bridge papers**, **${S.sharedConcepts.length} shared concepts**, and **${S.bridgeResearchers.length} bridge researchers**.
+
+**Nexus Score: ${S.nexusScore}/100** — ${S.nexusScore>=70?'High collision potential — strong interdisciplinary opportunity':S.nexusScore>=40?'Moderate collision potential — targeted collaboration recommended':'Low overlap — any bridging work would be highly novel'}
+
+---
+
+## Collision Points
+
+`;
+  S.collisions.forEach((c,i)=>{md+=`### ${i+1}. ${c.type}: ${c.title}\n${c.desc}\n\n**Collision Strength:** ${c.strength}/100\n${c.aiInsight?'\n**AI Insight:** '+c.aiInsight+'\n':''}\n---\n\n`;});
+
+  md+=`## Shared Concepts\n\n${S.sharedConcepts.slice(0,15).map(c=>`- **${c.name}** (${c.inA}× in A, ${c.inB}× in B)`).join('\n')}\n\n`;
+  md+=`## Bridge Papers: ${S.bridgePapers.length}\n\n${S.bridgePapers.slice(0,5).map(p=>`- ${p.title} (${p.authors}, ${p.year})`).join('\n')}\n\n`;
+  if(S.bridgeResearchers.length)md+=`## Bridge Researchers\n\n${S.bridgeResearchers.slice(0,5).map(r=>`- **${r.name}** — ${r.inA} papers in A, ${r.inB} in B`).join('\n')}\n\n`;
+  if(S.hypos.length){md+=`## Collision Hypotheses\n\n`;S.hypos.forEach((h,i)=>{md+=`### ${i+1}. ${h.title}\n**Rationale:** ${h.rationale}\n**Methodology:** ${h.methodology}\n*Confidence: ${h.confidence}% · Speculation: ${h.speculation}*\n\n---\n\n`;});}
+
+  md+=`## Methodology\n\nData sources: OpenAlex, arXiv, PubMed\nNexus Score™ = f(concept overlap, cross-citation deficit, bridge researchers, collision density)\nAnalysis date: ${now}\n\n---\n\n*This report was generated automatically. All collision points should be validated by domain experts.*\n\n*Kristal Nexus is free and open-source. Built by Mullair Jeudi, MD · Kristal Labs · Named after my niece Kristal.*\n`;
+
+  document.getElementById('reportOut').textContent=md;
+  S.reportMd=md;
+  toast('Report generated','ok');
+}
+
+function copyReport(){if(!S.reportMd){toast('Generate first','warn');return;} navigator.clipboard.writeText(S.reportMd).then(()=>toast('Copied','ok'));}
+function downloadReport(){
+  if(!S.reportMd){toast('Generate first','warn');return;}
+  const b=new Blob([S.reportMd],{type:'text/markdown'}); const u=URL.createObjectURL(b);
+  const a=document.createElement('a'); a.href=u; a.download=`nexus-${S.a.replace(/\s+/g,'-')}-x-${S.b.replace(/\s+/g,'-')}-${Date.now()}.md`; a.click(); URL.revokeObjectURL(u);
+}
+
+// ═══════════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showProg(on){document.getElementById('progWrap').classList.toggle('show',on);}
+function setProg(pct,lbl){document.getElementById('progBar').style.width=pct+'%';document.getElementById('progLabel').textContent=lbl;}
+function renderSteps(steps){document.getElementById('stepRow').innerHTML=steps.map((s,i)=>`<span class="step-pill" id="step-${i}">${s}</span>`).join('');}
+function setStep(i,st){const el=document.getElementById('step-'+i);if(!el)return;el.classList.remove('active','done');el.classList.add(st);}
+function updStat(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+
+function clog(msg,type='sys'){
+  const el=document.getElementById('console');
+  const t=new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  el.innerHTML+=`<div class="con-line"><span class="con-time">${t}</span><span class="con-tag ${type}">${type}</span><span class="con-msg">${msg}</span></div>`;
+  el.scrollTop=el.scrollHeight;
+}
+
+function exportLogs(){
+  const lines=[...document.querySelectorAll('.con-line')].map(l=>l.textContent).join('\n');
+  const b=new Blob([lines],{type:'text/plain'}); const u=URL.createObjectURL(b);
+  const a=document.createElement('a'); a.href=u; a.download=`nexus-log-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(u);
+}
+
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-family:var(--ff-mono);font-size:12px;z-index:200;animation:fadeIn 0.3s;background:${type==='ok'?'var(--teal-dim)':type==='warn'?'var(--gold-dim)':'var(--rose-dim)'};color:${type==='ok'?'var(--teal)':type==='warn'?'var(--gold)':'var(--rose)'};border:1px solid ${type==='ok'?'rgba(45,212,191,0.3)':type==='warn'?'rgba(212,168,83,0.3)':'rgba(248,113,113,0.3)'}`;
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
+init();
+</script>
+</body>
+</html>
